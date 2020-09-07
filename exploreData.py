@@ -53,8 +53,11 @@ data = addData(dfOne, dfTwo)
 data = data.reset_index(drop=False)
 data = data.dropna(axis=0)
 print(data.head(5))
-# data = data.drop(['Date'], axis=1)
-scatter_matrix(data)
+data = data.drop(['Date', 'UUID'], axis=1)
+plt.scatter(data.Day, data.E10)
+plt.show()
+plt.scatter(data.Hour, data.deltaE10)
+plt.show()
 '''
 y = data.deltaE10
 X = data.drop(['deltaE10'], axis=1)
