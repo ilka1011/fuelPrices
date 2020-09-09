@@ -4,7 +4,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import dates
 import datetime
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split#
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
 
 
 def convertTimestamp(df):
@@ -52,9 +54,14 @@ dates = dates.date2num(dfOne.Date)
 data = addData(dfOne, dfTwo)
 data = data.reset_index(drop=False)
 data = data.dropna(axis=0)
-print(data.head(5))
-data = data.drop(['Date', 'UUID'], axis=1)
-plt.scatter(data.Day, data.E10)
+#data = data.drop(['Date'], axis=1)
+
+labelenc = LabelEncoder()
+onehotencoder = OneHotEncoder()
+data['UUID'] = labelenc.fit_transform(data['UUID'])
+#data = np.array(onehotencoder.fit_transform(data['UUID'])
+print(data.head(25))
+plt.scatter(data.UUID, data.deltaE10)
 plt.show()
 plt.scatter(data.Hour, data.deltaE10)
 plt.show()
