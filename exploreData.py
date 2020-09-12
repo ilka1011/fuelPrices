@@ -4,29 +4,30 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import dates
 import datetime
-from sklearn.model_selection import train_test_split#
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.neural_network import MLPRegressor
 
 
 def convertTimestamp(df):
     df['Date'] = pd.to_datetime(df.Date)
-    df['Year'] = df.Date.dt.year
-    df['Month'] = df.Date.dt.month
-    df['Day'] = df.Date.dt.day
-    df['Hour'] = df.Date.dt.hour
-    df['Minute'] = df.Date.dt.minute
+    df['Year'] = (df.Date.dt.year / 2020)
+    df['Month'] = (df.Date.dt.month / 12)
+    df['Day'] = (df.Date.dt.day / 30)
+    df['Hour'] = (df.Date.dt.hour / 24)
+    df['Minute'] = (df.Date.dt.minute / 60)
 
 
 def calcDelta(df):
     df = df.set_index('Date')
     df.sort_index(inplace=True)
     df['deltaDiesel'] = df.groupby(['Year', 'Month', 'Day'])[
-        'Diesel'].transform(lambda x: (x - x[0]))
+        'Diesel'].transform(lambda x: (x - x[0])*20)
     df['deltaE5'] = df.groupby(['Year', 'Month', 'Day'])[
-        'E5'].transform(lambda x: (x - x[0]))
+        'E5'].transform(lambda x: (x - x[0])*20)
     df['deltaE10'] = df.groupby(['Year', 'Month', 'Day'])[
-        'E10'].transform(lambda x: (x - x[0]))
+        'E10'].transform(lambda x: (x - x[0])*20)
     df = df.reset_index(drop=False)
     return df
 
@@ -36,7 +37,7 @@ def addData(df1, df2):
     df2 = df2.set_index(['Year', 'Month', 'Day'])
     df1.sort_index(inplace=True)
     df2.sort_index(inplace=True)
-    df1['Oil'] = df2.groupby('Date')['Price'].transform(lambda x: (x))
+    df1['Oil'] = df2.groupby('Date')['Price'].transform(lambda x: (x/25))
 
     return df1
 
@@ -48,29 +49,25 @@ dfTwo = pd.read_csv("brent_oil.csv", names=['Date', 'Price'])
 convertTimestamp(dfOne)
 convertTimestamp(dfTwo)
 dfOne = calcDelta(dfOne)
-# dfOne.reset_index(drop=False)
-print(dfOne.dtypes)
+
 dates = dates.date2num(dfOne.Date)
 data = addData(dfOne, dfTwo)
 data = data.reset_index(drop=False)
 data = data.dropna(axis=0)
-#data = data.drop(['Date'], axis=1)
 
-labelenc = LabelEncoder()
-onehotencoder = OneHotEncoder()
-data['UUID'] = labelenc.fit_transform(data['UUID'])
-#data = np.array(onehotencoder.fit_transform(data['UUID'])
-print(data.head(25))
-plt.scatter(data.UUID, data.deltaE10)
-plt.show()
-plt.scatter(data.Hour, data.deltaE10)
-plt.show()
-'''
+uuid = pd.get_dummies(data.UUID)
+data = pd.concat([data, uuid], axis=1)
+data = data.drop(['Date', 'Year', 'UUID', 'Diesel', 'E5', 'E10'], axis=1)
+
+
 y = data.deltaE10
-X = data.drop(['deltaE10'], axis=1)
-# X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size = 0.15, random_state = 42)
+X = data.drop(['deltaDiesel', 'deltaE5', 'deltaE10'], axis=1)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42)
 # dates = dates.date2num(X_test.Date)
-plt.scatter(X_test.Date, y_test)
-plt.show()
-'''
+scaler = StandardScaler().fit(X_train)
+X_train = scaler.transform(X_train)
+X_test = scaler.transform(X_test)
+
+mlp = make_pipeline(StandardScaler(), MLPRegressor(hidden_layer_sizes=(100, 10),
+                                 max_iter=500, random_state=0)))
