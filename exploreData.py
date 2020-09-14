@@ -8,7 +8,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score, accuracy_score
+import joblib
 
 
 def convertTimestamp(df):
@@ -66,15 +67,20 @@ X = data.drop(['deltaDiesel', 'deltaE5', 'deltaE10'], axis=1)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.25, random_state=42)
 
-print(X_test.dtypes)
 
 dat = X_test.Date
-print(dat)
 X_train = X_train.drop(['Date'], axis=1)
 X_test = X_test.drop(['Date'], axis=1)
 scaler = StandardScaler().fit(X_train)
 X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
+
+np.savetxt('X_train.csv', X_train, delimiter=',')
+np.savetxt('X_test.csv', X_test, delimiter=',')
+np.savetxt('y_train.csv', y_train, delimiter=',')
+np.savetxt('y_test.csv', y_test, delimiter=',')
+dat.to_csv('dates.csv')
+'''
 
 mlp = make_pipeline(StandardScaler(), MLPRegressor(
     max_iter=500, random_state=42))
@@ -85,10 +91,15 @@ print("searching for parameters...")
 clf = GridSearchCV(mlp, hyperparameters, cv=10)
 print("training network...")
 clf.fit(X_train, y_train)
+
+# joblib.dump(clf, 'mlp_class.pkl')
 print("predict values...")
 y_pred = clf.predict(X_test)
-
+y_pred = (y_pred/20)
+y_test = (y_test/20)
 print(mean_squared_error(y_test, y_pred))
+
 plt.plot_date(dat, y_pred, linestyle='None', marker='.', color='r')
 plt.plot_date(dat, y_test, linestyle='None', marker='x', color='b')
 plt.show()
+'''
