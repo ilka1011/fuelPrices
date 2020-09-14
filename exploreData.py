@@ -1,5 +1,4 @@
 import pandas as pd
-from pandas.plotting import scatter_matrix
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import dates
@@ -8,6 +7,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPRegressor
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import mean_squared_error
 
 
 def convertTimestamp(df):
@@ -57,17 +58,37 @@ data = data.dropna(axis=0)
 
 uuid = pd.get_dummies(data.UUID)
 data = pd.concat([data, uuid], axis=1)
-data = data.drop(['Date', 'Year', 'UUID', 'Diesel', 'E5', 'E10'], axis=1)
+data = data.drop(['Year', 'UUID', 'Diesel', 'E5', 'E10'], axis=1)
 
 
 y = data.deltaE10
 X = data.drop(['deltaDiesel', 'deltaE5', 'deltaE10'], axis=1)
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.25, random_state=42)
-# dates = dates.date2num(X_test.Date)
+
+print(X_test.dtypes)
+
+dat = X_test.Date
+print(dat)
+X_train = X_train.drop(['Date'], axis=1)
+X_test = X_test.drop(['Date'], axis=1)
 scaler = StandardScaler().fit(X_train)
 X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
 
-mlp = make_pipeline(StandardScaler(), MLPRegressor(hidden_layer_sizes=(100, 10),
-                                 max_iter=500, random_state=0)))
+mlp = make_pipeline(StandardScaler(), MLPRegressor(
+    max_iter=500, random_state=42))
+hyperparameters = {'mlpregressor__hidden_layer_sizes': [
+    (100, 10)], 'mlpregressor__solver': ['lbfgs'], 'mlpregressor__activation': ['relu']}
+#
+print("searching for parameters...")
+clf = GridSearchCV(mlp, hyperparameters, cv=10)
+print("training network...")
+clf.fit(X_train, y_train)
+print("predict values...")
+y_pred = clf.predict(X_test)
+
+print(mean_squared_error(y_test, y_pred))
+plt.plot_date(dat, y_pred, linestyle='None', marker='.', color='r')
+plt.plot_date(dat, y_test, linestyle='None', marker='x', color='b')
+plt.show()
