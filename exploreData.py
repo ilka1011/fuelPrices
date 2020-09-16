@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import dates
-import datetime
+from datetime import datetime
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -74,7 +74,7 @@ X_test = X_test.drop(['Date'], axis=1)
 scaler = StandardScaler().fit(X_train)
 X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
-
+'''
 np.savetxt('X_train.csv', X_train, delimiter=',')
 np.savetxt('X_test.csv', X_test, delimiter=',')
 np.savetxt('y_train.csv', y_train, delimiter=',')
@@ -83,13 +83,15 @@ dat.to_csv('dates.csv')
 '''
 
 mlp = make_pipeline(StandardScaler(), MLPRegressor(
-    max_iter=500, random_state=42))
-hyperparameters = {'mlpregressor__hidden_layer_sizes': [
-    (100, 10)], 'mlpregressor__solver': ['lbfgs'], 'mlpregressor__activation': ['relu']}
+    max_iter=700, random_state=42))
+hyperparameters = {'mlpregressor__max_iter': [700,1000,2000], 'mlpregressor__hidden_layer_sizes': [
+    (100, 10), (95,9), (160,50)], 'mlpregressor__solver': ['lbfgs'], 'mlpregressor__activation': ['relu']}
 #
 print("searching for parameters...")
+print(datetime.now())
 clf = GridSearchCV(mlp, hyperparameters, cv=10)
 print("training network...")
+print(datetime.now())
 clf.fit(X_train, y_train)
 
 # joblib.dump(clf, 'mlp_class.pkl')
@@ -102,4 +104,4 @@ print(mean_squared_error(y_test, y_pred))
 plt.plot_date(dat, y_pred, linestyle='None', marker='.', color='r')
 plt.plot_date(dat, y_test, linestyle='None', marker='x', color='b')
 plt.show()
-'''
+
