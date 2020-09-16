@@ -84,7 +84,7 @@ dat.to_csv('dates.csv')
 
 mlp = make_pipeline(StandardScaler(), MLPRegressor(
     max_iter=700, random_state=42))
-hyperparameters = {'mlpregressor__hidden_layer_sizes': [
+hyperparameters = {'mlpregressor__max_iter': [700,1000,2000], 'mlpregressor__hidden_layer_sizes': [
     (100, 10), (95,9), (160,50)], 'mlpregressor__solver': ['lbfgs'], 'mlpregressor__activation': ['relu']}
 #
 print("searching for parameters...")
