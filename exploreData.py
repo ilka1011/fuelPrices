@@ -8,7 +8,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import mean_squared_error, r2_score, accuracy_score
+from sklearn.metrics import mean_squared_error, r2_score
 import joblib
 
 
@@ -25,11 +25,11 @@ def calcDelta(df):
     df = df.set_index('Date')
     df.sort_index(inplace=True)
     df['deltaDiesel'] = df.groupby(['Year', 'Month', 'Day'])[
-        'Diesel'].transform(lambda x: (x - x[0])*20)
+        'Diesel'].transform(lambda x: (x - x[0])*5)
     df['deltaE5'] = df.groupby(['Year', 'Month', 'Day'])[
-        'E5'].transform(lambda x: (x - x[0])*20)
+        'E5'].transform(lambda x: (x - x[0])*5)
     df['deltaE10'] = df.groupby(['Year', 'Month', 'Day'])[
-        'E10'].transform(lambda x: (x - x[0])*20)
+        'E10'].transform(lambda x: (x - x[0])*5)
     df = df.reset_index(drop=False)
     return df
 
@@ -39,7 +39,7 @@ def addData(df1, df2):
     df2 = df2.set_index(['Year', 'Month', 'Day'])
     df1.sort_index(inplace=True)
     df2.sort_index(inplace=True)
-    df1['Oil'] = df2.groupby('Date')['Price'].transform(lambda x: (x/25))
+    df1['Oil'] = df2.groupby('Date')['Price'].transform(lambda x: (x/30))
 
     return df1
 
@@ -74,18 +74,18 @@ X_test = X_test.drop(['Date'], axis=1)
 scaler = StandardScaler().fit(X_train)
 X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
-'''
+
 np.savetxt('X_train.csv', X_train, delimiter=',')
 np.savetxt('X_test.csv', X_test, delimiter=',')
 np.savetxt('y_train.csv', y_train, delimiter=',')
 np.savetxt('y_test.csv', y_test, delimiter=',')
 dat.to_csv('dates.csv')
-'''
 
+'''
 mlp = make_pipeline(StandardScaler(), MLPRegressor(
-    max_iter=700, random_state=42))
-hyperparameters = {'mlpregressor__max_iter': [700,1000,2000], 'mlpregressor__hidden_layer_sizes': [
-    (100, 10), (95,9), (160,50)], 'mlpregressor__solver': ['lbfgs'], 'mlpregressor__activation': ['relu']}
+    random_state=42, verbose=True))
+hyperparameters = {'mlpregressor__max_iter': [1000, 2000], 'mlpregressor__hidden_layer_sizes': [
+    (100, 10), (95, 9), (160, 50)], 'mlpregressor__solver': ['lbfgs'], 'mlpregressor__activation': ['relu']}
 #
 print("searching for parameters...")
 print(datetime.now())
@@ -94,14 +94,15 @@ print("training network...")
 print(datetime.now())
 clf.fit(X_train, y_train)
 
-# joblib.dump(clf, 'mlp_class.pkl')
+joblib.dump(clf, 'mlp_class.pkl')
 print("predict values...")
 y_pred = clf.predict(X_test)
-y_pred = (y_pred/20)
-y_test = (y_test/20)
+y_pred = (y_pred/5)
+y_test = (y_test/5)
 print(mean_squared_error(y_test, y_pred))
+print(r2_score(y_test, ypred))
 
 plt.plot_date(dat, y_pred, linestyle='None', marker='.', color='r')
 plt.plot_date(dat, y_test, linestyle='None', marker='x', color='b')
 plt.show()
-
+'''
