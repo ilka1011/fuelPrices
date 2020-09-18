@@ -81,11 +81,11 @@ np.savetxt('y_train.csv', y_train, delimiter=',')
 np.savetxt('y_test.csv', y_test, delimiter=',')
 dat.to_csv('dates.csv')
 
-'''
-mlp = make_pipeline(StandardScaler(), MLPRegressor(
-    random_state=42, verbose=True))
-hyperparameters = {'mlpregressor__max_iter': [1000, 2000], 'mlpregressor__hidden_layer_sizes': [
-    (100, 10), (95, 9), (160, 50)], 'mlpregressor__solver': ['lbfgs'], 'mlpregressor__activation': ['relu']}
+
+mlp = make_pipeline(StandardScaler(), MLPRegressor(max_iter=700,
+                                                   random_state=42, verbose=True))
+hyperparameters = {'mlpregressor__hidden_layer_sizes': [(100, 10), (95, 9), (160, 50)], 'mlpregressor__solver': [
+    'adam', 'lbfgs'], 'mlpregressor__activation': ['relu', 'tanh']}
 #
 print("searching for parameters...")
 print(datetime.now())
@@ -94,15 +94,16 @@ print("training network...")
 print(datetime.now())
 clf.fit(X_train, y_train)
 
-joblib.dump(clf, 'mlp_class.pkl')
+print(clf.best_params_)
+
+joblib.dump(clf, 'mlp_reg_3.pkl')
 print("predict values...")
 y_pred = clf.predict(X_test)
 y_pred = (y_pred/5)
 y_test = (y_test/5)
 print(mean_squared_error(y_test, y_pred))
-print(r2_score(y_test, ypred))
+print(r2_score(y_test, y_pred))
 
 plt.plot_date(dat, y_pred, linestyle='None', marker='.', color='r')
 plt.plot_date(dat, y_test, linestyle='None', marker='x', color='b')
 plt.show()
-'''
